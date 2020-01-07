@@ -1,35 +1,35 @@
 package com.br.springproject;
 
 public class MovieModel {
-  private String name;
-  private String thumbnail;
+  private String title;
+  private String url;
 
-  public MovieModel(String name, String thumbnail) {
-    this.name = name;
-    this.thumbnail = thumbnail;
+  public MovieModel(String title, String url) {
+    this.title = title;
+    this.url = url;
   }
 
-  public String getName() {
-    return name;
+  public String getTitle() {
+    return title;
   }
 
-  public void setName(String name) {
-    this.name = name;
+  public void setTitle(String title) {
+    this.title = title;
   }
 
-  public String getThumbnail() {
-    return thumbnail;
+  public String getUrl() {
+    return url;
   }
 
-  public void setThumbnail(String thumbnail) {
-    this.thumbnail = thumbnail;
+  public void setUrl(String url) {
+    this.url = url;
   }
 
   @Override
   public String toString() {
     return "MovieModel{" +
-        "name='" + name + '\'' +
-        ", thumbnail='" + thumbnail + '\'' +
+        "title='" + title + '\'' +
+        ", url='" + url + '\'' +
         '}';
   }
 }

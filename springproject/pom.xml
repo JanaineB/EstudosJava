@@ -11,7 +11,7 @@
 	<groupId>com.br</groupId>
 	<artifactId>springproject</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>springproject</name>
+	<title>springproject</title>
 	<description>Demo project for Spring Boot</description>
 
 	<properties>
@@ -22,6 +22,12 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.8.6</version>
+			<scope>compile</scope>
 		</dependency>
 
 		<dependency>
@@ -38,6 +44,7 @@
 	</dependencies>
 
 	<build>
+		<finalName>movieapp</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
