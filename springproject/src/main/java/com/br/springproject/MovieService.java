@@ -1,16 +1,22 @@
 package com.br.springproject;
 
+import com.google.gson.Gson;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.decorators.Decorators;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
+import io.vavr.control.Try;
+import org.springframework.stereotype.Service;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.HashMap;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-
-import com.google.gson.Gson;
-import org.springframework.stereotype.Service;
+import java.util.function.Supplier;
 
 @Service
 public class MovieService {
@@ -21,8 +27,25 @@ public class MovieService {
     }
 
     //TODO: handle exceptions
-    public List<MovieModel> fetchMovies() throws IOException, InterruptedException {
+    public CompletableFuture<HttpResponse<String>> decorateAPIcall(){
         //TODO: Check REDIS
+
+        Retry retry = Retry.ofDefaults("requestStartWarsAPI");
+
+        Supplier<CompletableFuture<HttpResponse<String>>> supplier = () -> fetchMovies();
+
+        Supplier<CompletableFuture<HttpResponse<String>>> decoratedSupplier = Decorators.ofSupplier(supplier)
+                .withRetry(retry)
+                .decorate();
+
+        String result = Try.ofSupplier(decoratedSupplier);
+
+        System.out.println("\n_______________\n RESULT: "+result+"\n_________________\n");
+
+        return null;
+    }
+
+    public CompletableFuture<HttpResponse<String>> fetchMovies(){
         HttpClient client = HttpClient.newHttpClient();
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -30,15 +53,16 @@ public class MovieService {
                 .uri(URI.create(settings.getApiURL()))
                 .build();
 
-        CompletableFuture<HttpResponse<String>> responseFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
-        responseFuture.thenApply(response -> {
-            System.out.println("________\nRESPONDEU\n_________");
-            Gson gson = new Gson();
-            MovieRequest movie = gson.fromJson(response.body(), MovieRequest.class);
-            System.out.println("\n*********\n" + movie.toString());
-            return movie;
-        });
+        CompletableFuture<HttpResponse<String>> responseFuture =
+                client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
 
-        return null;
+        responseFuture
+                .thenApply(response -> {
+                    Gson gson = new Gson();
+                    return gson.fromJson(response.body(), MovieRequest.class);
+                })
+                .exceptionally(error -> new MovieRequest(error.getMessage()));
+
+        return responseFuture;
     }
 }
