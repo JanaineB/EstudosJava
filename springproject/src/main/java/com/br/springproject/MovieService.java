@@ -29,6 +29,13 @@ public class MovieService {
     //TODO: handle exceptions
     public CompletableFuture<HttpResponse<String>> decorateAPIcall(){
         //TODO: Check REDIS
+//        Supplier<CompletionStage<String>> completionStageSupplier =
+//                () -> CompletableFuture.supplyAsync(helloWorldService::returnHelloWorld);
+//
+//        Supplier<CompletionStage<String>> decoratedCompletionStage = Decorators.ofCompletionStage(completionStageSupplier)
+//                .withCircuitBreaker(circuitBreaker)
+//                .withRetry(Retry.ofDefaults("id"), Executors.newSingleThreadScheduledExecutor())
+//                .decorate();
 
         Retry retry = Retry.ofDefaults("requestStartWarsAPI");
 
