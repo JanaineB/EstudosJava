@@ -22,7 +22,7 @@ public class MovieController {
     }
 
     @GetMapping("/movies/{id}/characters")
-    public  List<String> getCharacters (@PathVariable String id){
+    public  List<CharactersModel> getCharacters (@PathVariable String id){
         return service.fetchMovieCharacters(id);
     }
 }
