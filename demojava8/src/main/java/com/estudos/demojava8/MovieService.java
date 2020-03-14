@@ -24,7 +24,8 @@ public class MovieService {
         this.redis = redis;
 
     }
-
+    //TODO: E as excessao? vai pa onde?
+    //TODO: E a resiliencia?
     public List<MovieModel> fetchMovies() {
         MovieRequest request = redis.checkRedis("movies", MovieRequest.class).orElseGet(() -> {
             Optional<MovieRequest> optionalRequest = client.request("films/?format=json", HttpMethod.GET, MovieRequest.class, "movies");

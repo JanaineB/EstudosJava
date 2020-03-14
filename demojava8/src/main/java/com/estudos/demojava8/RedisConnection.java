@@ -8,11 +8,15 @@ import java.util.Optional;
 
 @Configuration
 public class RedisConnection {
-    //TODO: extrair metodos redis para uma classe redis
+    private Settings settings;
+
+    public RedisConnection(Settings settings) {
+        this.settings = settings;
+    }
+
     public <T> Optional<T> checkRedis(String key, Class<T> model) {
-        //TODO: Abstrair auth para env var
-        Jedis jedis = new Jedis("localhost", 6379);
-        jedis.auth("123");
+        Jedis jedis = new Jedis(settings.getRedisHost(), settings.getRedisPort());
+        jedis.auth(settings.getRedisAuth());
 
         String value = jedis.get(key);
         jedis.close();
@@ -22,9 +26,10 @@ public class RedisConnection {
     }
 
     public void saveRedis(String key, String value) {
-        Jedis jedis = new Jedis("localhost", 6379);
-        jedis.auth("123");
+        Jedis jedis = new Jedis(settings.getRedisHost(), settings.getRedisPort());
+        jedis.auth(settings.getRedisAuth());
         //TODO: Precisa usar o pool
         jedis.set(key, value);
+        jedis.close();
     }
 }

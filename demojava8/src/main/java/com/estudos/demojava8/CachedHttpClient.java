@@ -19,7 +19,6 @@ public class CachedHttpClient {
         this.settings = settings;
 
     }
-    //TODO: extrair client para uma classe propria, tbm é necessario mudar o nome p/ indicar uso de cache
     public <T> Optional<T> request (String endpoint, HttpMethod method, Class<T> model, String cacheKey) {
         RestTemplate client = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
