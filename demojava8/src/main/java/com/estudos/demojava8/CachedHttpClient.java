@@ -1,0 +1,41 @@
+package com.estudos.demojava8;
+
+import com.google.gson.Gson;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Optional;
+
+@Configuration
+public class CachedHttpClient {
+    private Settings settings;
+    private RedisConnection redis;
+
+    public CachedHttpClient(Settings settings, RedisConnection redis) {
+        this.redis = redis;
+        this.settings = settings;
+
+    }
+    //TODO: extrair client para uma classe propria, tbm é necessario mudar o nome p/ indicar uso de cache
+    public <T> Optional<T> request (String endpoint, HttpMethod method, Class<T> model, String cacheKey) {
+        RestTemplate client = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("user-agent", "Application");
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        T response = client.exchange(
+                settings.getApiURL() + endpoint,
+                method,
+                entity,
+                model
+        ).getBody();
+
+        redis.saveRedis(cacheKey, new Gson().toJson(response));
+
+        return Optional.ofNullable(response);
+    }
+
+}

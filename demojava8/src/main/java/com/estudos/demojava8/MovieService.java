@@ -15,55 +15,19 @@ import java.util.stream.Collectors;
 @Service
 public class MovieService {
 
-    private Settings settings;
+    private RedisConnection redis;
+    private CachedHttpClient client;
 
-    private MovieService(Settings settings) {
+    private MovieService(RedisConnection redis, CachedHttpClient client) {
 
-        this.settings = settings;
+        this.client = client;
+        this.redis = redis;
 
-    }
-    //TODO: extrair metodos redis para uma classe redis
-    private <T> Optional<T> checkRedis(String key, Class<T> model) {
-        //TODO: Abstrair auth para env var
-        Jedis jedis = new Jedis("localhost", 6379);
-        jedis.auth("123");
-
-        String value = jedis.get(key);
-        jedis.close();
-        System.out.println("############### VALUE: " + value);
-
-        return Optional.ofNullable(new Gson().fromJson(value, model));
-    }
-
-    private boolean saveRedis(String key, String value) {
-        Jedis jedis = new Jedis("localhost", 6379);
-        jedis.auth("123");
-        //TODO: Precisa usar o pool
-        jedis.set(key, value);
-        return true;
-    }
-    //TODO: extrair client para uma classe propria, tbm é necessario mudar o nome p/ indicar uso de cache
-    private <T> Optional<T> httpClient(String endpoint, HttpMethod method, Class<T> model, String cacheKey) {
-        RestTemplate client = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("user-agent", "Application");
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-
-        T response = client.exchange(
-                settings.getApiURL() + endpoint,
-                method,
-                entity,
-                model
-        ).getBody();
-
-        saveRedis(cacheKey, new Gson().toJson(response));
-
-        return Optional.ofNullable(response);
     }
 
     public List<MovieModel> fetchMovies() {
-        MovieRequest request = checkRedis("movies", MovieRequest.class).orElseGet(() -> {
-            Optional<MovieRequest> optionalRequest = httpClient("films/?format=json", HttpMethod.GET, MovieRequest.class, "movies");
+        MovieRequest request = redis.checkRedis("movies", MovieRequest.class).orElseGet(() -> {
+            Optional<MovieRequest> optionalRequest = client.request("films/?format=json", HttpMethod.GET, MovieRequest.class, "movies");
 
             return optionalRequest.orElseThrow(RuntimeException::new);
         });
@@ -73,7 +37,7 @@ public class MovieService {
 
     public List<CharactersModel> fetchMovieCharacters(String id) {
         //TODO: essa chamada nao precisa ser salva no Redis. Vc q lute!
-        Optional<GetCharactersURL> optionalRequest = httpClient("films/" + id + "/?format=json", HttpMethod.GET, GetCharactersURL.class, "charactersurl");
+        Optional<GetCharactersURL> optionalRequest = client.request("films/" + id + "/?format=json", HttpMethod.GET, GetCharactersURL.class, "charactersurl");
 
         GetCharactersURL request = optionalRequest.orElseThrow(RuntimeException::new);
 
@@ -99,7 +63,7 @@ public class MovieService {
 
     private CharactersModel getCharactersModel(String s) {
         //TODO: nao usar string, usar list no redis
-        Optional<CharactersModel> optionalCharactersModel = httpClient(s, HttpMethod.GET, CharactersModel.class, "characters");
+        Optional<CharactersModel> optionalCharactersModel = client.request(s, HttpMethod.GET, CharactersModel.class, "characters");
         return optionalCharactersModel.orElseThrow(RuntimeException::new);
     }
 }
