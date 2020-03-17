@@ -19,7 +19,7 @@ public class CachedHttpClient {
         this.settings = settings;
 
     }
-    public <T> Optional<T> request (String endpoint, HttpMethod method, Class<T> model, String cacheKey) {
+    public <T> Optional<T> request (String endpoint, HttpMethod method, Class<T> model, String cacheKey, Boolean redisFlag) {
         RestTemplate client = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.add("user-agent", "Application");
@@ -32,7 +32,9 @@ public class CachedHttpClient {
                 model
         ).getBody();
 
-        redis.saveRedis(cacheKey, new Gson().toJson(response));
+        if(redisFlag) {
+            redis.saveRedis(cacheKey, new Gson().toJson(response));
+        }
 
         return Optional.ofNullable(response);
     }

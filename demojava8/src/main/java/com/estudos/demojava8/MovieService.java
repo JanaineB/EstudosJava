@@ -28,7 +28,9 @@ public class MovieService {
     //TODO: E a resiliencia?
     public List<MovieModel> fetchMovies() {
         MovieRequest request = redis.checkRedis("movies", MovieRequest.class).orElseGet(() -> {
-            Optional<MovieRequest> optionalRequest = client.request("films/?format=json", HttpMethod.GET, MovieRequest.class, "movies");
+            Optional<MovieRequest> optionalRequest = client.request(
+                    "films/?format=json", HttpMethod.GET, MovieRequest.class, "movies", true
+            );
 
             return optionalRequest.orElseThrow(RuntimeException::new);
         });
@@ -37,8 +39,7 @@ public class MovieService {
     }
 
     public List<CharactersModel> fetchMovieCharacters(String id) {
-        //TODO: essa chamada nao precisa ser salva no Redis. Vc q lute!
-        Optional<GetCharactersURL> optionalRequest = client.request("films/" + id + "/?format=json", HttpMethod.GET, GetCharactersURL.class, "charactersurl");
+        Optional<GetCharactersURL> optionalRequest = client.request("films/" + id + "/?format=json", HttpMethod.GET, GetCharactersURL.class, "charactersurl", false);
 
         GetCharactersURL request = optionalRequest.orElseThrow(RuntimeException::new);
 
@@ -63,8 +64,9 @@ public class MovieService {
     }
 
     private CharactersModel getCharactersModel(String s) {
+        // TODO: Faltando checar no redis antes se o dado ja existe.
         //TODO: nao usar string, usar list no redis
-        Optional<CharactersModel> optionalCharactersModel = client.request(s, HttpMethod.GET, CharactersModel.class, "characters");
+        Optional<CharactersModel> optionalCharactersModel = client.request(s, HttpMethod.GET, CharactersModel.class, "characters", true);
         return optionalCharactersModel.orElseThrow(RuntimeException::new);
     }
 }
