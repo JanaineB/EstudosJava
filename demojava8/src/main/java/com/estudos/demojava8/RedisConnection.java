@@ -3,7 +3,11 @@ package com.estudos.demojava8;
 import com.google.gson.Gson;
 import org.springframework.context.annotation.Configuration;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.Transaction;
 
+import java.util.List;
 import java.util.Optional;
 
 @Configuration
@@ -31,5 +35,20 @@ public class RedisConnection {
         //TODO: Precisa usar o pool
         jedis.set(key, value);
         jedis.close();
+    }
+
+    public void saveListRedis(String listKey, List<String> values){
+        JedisPool pool = new JedisPool(new JedisPoolConfig(),settings.getRedisHost());
+        try (Jedis jedis = pool.getResource()) {
+            jedis.auth(settings.getRedisAuth());
+            Transaction t = jedis.multi();
+            t.set(listKey, "value");
+            values.forEach(s -> {
+                t.zadd(listKey, 0, s);
+            });
+
+        }
+        pool.close();
+
     }
 }

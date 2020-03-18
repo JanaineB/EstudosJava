@@ -1,12 +1,7 @@
 package com.estudos.demojava8;
 
-import com.google.gson.Gson;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-import redis.clients.jedis.Jedis;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,7 +34,10 @@ public class MovieService {
     }
 
     public List<CharactersModel> fetchMovieCharacters(String id) {
-        Optional<GetCharactersURL> optionalRequest = client.request("films/" + id + "/?format=json", HttpMethod.GET, GetCharactersURL.class, "charactersurl", false);
+        Optional<GetCharactersURL> optionalRequest = client.request(
+                "films/" + id + "/?format=json", HttpMethod.GET, GetCharactersURL.class,
+                "charactersurl", false
+        );
 
         GetCharactersURL request = optionalRequest.orElseThrow(RuntimeException::new);
 
@@ -66,7 +64,9 @@ public class MovieService {
     private CharactersModel getCharactersModel(String s) {
         // TODO: Faltando checar no redis antes se o dado ja existe.
         //TODO: nao usar string, usar list no redis
-        Optional<CharactersModel> optionalCharactersModel = client.request(s, HttpMethod.GET, CharactersModel.class, "characters", true);
+        Optional<CharactersModel> optionalCharactersModel = client.request(
+                s, HttpMethod.GET, CharactersModel.class, "characters", true
+        );
         return optionalCharactersModel.orElseThrow(RuntimeException::new);
     }
 }
