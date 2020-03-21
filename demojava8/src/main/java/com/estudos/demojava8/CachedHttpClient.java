@@ -38,5 +38,22 @@ public class CachedHttpClient {
 
         return Optional.ofNullable(response);
     }
+    public <T> Optional <T> requestList(String endpoint, HttpMethod method, Class<T> model, String cacheKey){
+        RestTemplate client = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("user-agent", "Application");
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        T response = client.exchange(
+                settings.getApiURL() + endpoint,
+                method,
+                entity,
+                model
+        ).getBody();
+
+        redis.saveListRedis(cacheKey, new Gson().toJson(response));
+
+        return Optional.ofNullable(response);
+    }
 
 }

@@ -13,40 +13,36 @@ import java.util.Optional;
 @Configuration
 public class RedisConnection {
     private Settings settings;
+    JedisPool pool = new JedisPool(new JedisPoolConfig(),settings.getRedisHost());
 
     public RedisConnection(Settings settings) {
         this.settings = settings;
     }
 
     public <T> Optional<T> checkRedis(String key, Class<T> model) {
-        Jedis jedis = new Jedis(settings.getRedisHost(), settings.getRedisPort());
-        jedis.auth(settings.getRedisAuth());
-
-        String value = jedis.get(key);
-        jedis.close();
-        System.out.println("############### VALUE: " + value);
-
+        String value = null;
+        try (Jedis jedis = pool.getResource()) {
+            jedis.auth(settings.getRedisAuth());
+            value = jedis.get(key);
+            System.out.println("############### VALUE: " + value);
+        }
+        pool.close();
         return Optional.ofNullable(new Gson().fromJson(value, model));
     }
 
     public void saveRedis(String key, String value) {
-        Jedis jedis = new Jedis(settings.getRedisHost(), settings.getRedisPort());
-        jedis.auth(settings.getRedisAuth());
-        //TODO: Precisa usar o pool
-        jedis.set(key, value);
-        jedis.close();
+        try (Jedis jedis = pool.getResource()) {
+            jedis.auth(settings.getRedisAuth());
+            jedis.set(key, value);
+        }
+        pool.close();
     }
 
-    public void saveListRedis(String listKey, List<String> values){
-        JedisPool pool = new JedisPool(new JedisPoolConfig(),settings.getRedisHost());
+    public void saveListRedis(String listKey, String value){
         try (Jedis jedis = pool.getResource()) {
             jedis.auth(settings.getRedisAuth());
             Transaction t = jedis.multi();
-            t.set(listKey, "value");
-            values.forEach(s -> {
-                t.zadd(listKey, 0, s);
-            });
-
+            t.append(listKey, value);
         }
         pool.close();
 

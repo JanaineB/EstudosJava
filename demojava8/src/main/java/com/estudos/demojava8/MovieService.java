@@ -33,40 +33,39 @@ public class MovieService {
         return request.getResults();
     }
 
-    public List<CharactersModel> fetchMovieCharacters(String id) {
-        Optional<GetCharactersURL> optionalRequest = client.request(
-                "films/" + id + "/?format=json", HttpMethod.GET, GetCharactersURL.class,
-                "charactersurl", false
-        );
+    public List<CharactersModel> fetchMovieCharacters(String filmid) {
+        List<CharactersModel> request = redis.checkRedis(filmid, List.class).orElseGet(() -> {
+            Optional<GetCharactersURL> optionalRequest = client.request(
+                    "films/" + filmid + "/?format=json", HttpMethod.GET, GetCharactersURL.class,
+                    "charactersurl", false
+            );
 
-        GetCharactersURL request = optionalRequest.orElseThrow(RuntimeException::new);
+            GetCharactersURL response = optionalRequest.orElseThrow(RuntimeException::new);
 
-//        return request.getCharacters().forEach(s -> {
-//            s.split("api/");
-//        });
+            List<String> endpoint = response.getCharacters()
+                    .stream()
+                    .map(s -> s.split("api/")[1])// no slipt tudo q vem antes do api/ é [0] e [1] depois
+                    .collect(Collectors.toList());
 
-        List<String> endpoint = request.getCharacters()
-                .stream()
-                .map(s -> s.split("api/")[1])
-                .collect(Collectors.toList());
-
-        return fetchCharacterdata(endpoint);
+            return fetchCharacterdata(endpoint, filmid);
+        });
+        return request;
     }
 
-    public List<CharactersModel> fetchCharacterdata(List<String> endpointsList) {
+    public List<CharactersModel> fetchCharacterdata(List<String> endpointsList, String filmid) {
 
         return endpointsList
                 .stream()
-                .map(this::getCharactersModel)
+                .map(s->getCharactersModel(s, filmid))
                 .collect(Collectors.toList());
     }
 
-    private CharactersModel getCharactersModel(String s) {
+    private CharactersModel getCharactersModel(String endpoint, String filmid) {
         // TODO: Faltando checar no redis antes se o dado ja existe.
         //TODO: nao usar string, usar list no redis
-        Optional<CharactersModel> optionalCharactersModel = client.request(
-                s, HttpMethod.GET, CharactersModel.class, "characters", true
-        );
+
+        Optional<CharactersModel> optionalCharactersModel = client.requestList(
+                endpoint, HttpMethod.GET, CharactersModel.class, filmid);
         return optionalCharactersModel.orElseThrow(RuntimeException::new);
     }
 }
